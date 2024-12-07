@@ -10,7 +10,7 @@ const app = new Elysia()
   .group("/api", (app) => app.use(communitiesController))
   .use(swagger())
 
-  .listen(3000);
+  .listen(3022);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
