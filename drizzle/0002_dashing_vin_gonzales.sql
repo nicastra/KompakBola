@@ -1,0 +1,1 @@
+ALTER TABLE "comunities" RENAME TO "communities";
