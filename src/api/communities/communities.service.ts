@@ -1,8 +1,12 @@
 import { eq } from "drizzle-orm";
-import { toSlug, unprocessable } from "../../common/utils";
+import { notFound, toSlug, unprocessable } from "../../common/utils";
 import { db } from "../../db";
 import { communities } from "../../db/schema";
-import { CommunitiesInsert, CommunitiesPayload } from "./communities.schema";
+import {
+  CommunitiesBase,
+  CommunitiesInsert,
+  CommunitiesPayload,
+} from "./communities.schema";
 
 export abstract class CommunitiesService {
   static async create(communitiesPayload: CommunitiesPayload) {
@@ -30,7 +34,6 @@ export abstract class CommunitiesService {
       }
       // console.log("success", res);
     } catch (error) {
-      console.log("error insety", error);
       return unprocessable(error);
     }
   }
@@ -40,7 +43,11 @@ export abstract class CommunitiesService {
       const community = await db.query.communities.findFirst({
         where: eq(communities.slug, slug),
       });
-    } catch (error) {}
+
+      return { success: true, code: 200, data: community };
+    } catch (error) {
+      return unprocessable(error);
+    }
   }
 
   static async delete(slug: string) {
@@ -54,6 +61,37 @@ export abstract class CommunitiesService {
         success: true,
         message: "Delete Success",
       };
+    } catch (error) {
+      return unprocessable(error);
+    }
+  }
+
+  static async update(slug: string, data: Partial<CommunitiesBase>) {
+    try {
+      const community = await db.query.communities.findFirst({
+        where: eq(communities.slug, slug),
+      });
+
+      if (!community?.slug) {
+        return {
+          succes: false,
+          code: 404,
+        };
+      } else {
+        const { name, description } = data;
+
+        const newValue = {
+          ...(name && { name, slug: toSlug(name) }),
+          ...(description && { description }),
+        };
+
+        await db
+          .update(communities)
+          .set(newValue)
+          .where(eq(communities.id, community.id));
+
+        return this.get(newValue?.slug || community.slug);
+      }
     } catch (error) {
       return unprocessable(error);
     }

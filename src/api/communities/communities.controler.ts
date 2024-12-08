@@ -3,6 +3,7 @@ import { db } from "../../db";
 import { CommunitiesService } from "./communities.service";
 import { communitiesPayload } from "./communities.schema";
 import { communities } from "../../db/schema";
+import { param } from "drizzle-orm";
 
 export const communitiesController = new Elysia({ prefix: "/communities" })
   .get("", async () => {
@@ -10,11 +11,33 @@ export const communitiesController = new Elysia({ prefix: "/communities" })
 
     return { res };
   })
+  .get(
+    ":slug",
+    async ({ params, set }) => {
+      const res = await CommunitiesService.get(params?.slug);
+
+      console.log(res);
+      if (res === undefined) {
+        set.status = 404;
+
+        return {
+          succes: false,
+          message: "Community not found",
+        };
+      }
+      return res;
+    },
+    {
+      params: t.Object({
+        slug: t.String(),
+      }),
+    }
+  )
   .post(
     "",
     async ({ body, set }) => {
       try {
-        const community = await CommunitiesService.create(body.communities);
+        const community = await CommunitiesService.create(body.community);
 
         if (community?.code === 422) {
           set.status = 422;
@@ -35,7 +58,40 @@ export const communitiesController = new Elysia({ prefix: "/communities" })
 
     {
       body: t.Object({
-        communities: communitiesPayload,
+        community: communitiesPayload,
+      }),
+    }
+  )
+  .put(
+    ":slug",
+    async ({ params, body, set }) => {
+      try {
+        const res = await CommunitiesService.update(
+          params?.slug,
+          body?.community
+        );
+
+        if (res?.code === 404) {
+          set.status = 404;
+
+          return {
+            success: false,
+            message: "Community to edit not found",
+          };
+        }
+
+        return res;
+      } catch (error) {
+        // throw new Error("error", error);
+        console.log(error);
+      }
+    },
+    {
+      params: t.Object({
+        slug: t.String(),
+      }),
+      body: t.Object({
+        community: communitiesPayload,
       }),
     }
   )
