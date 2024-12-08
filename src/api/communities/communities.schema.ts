@@ -12,7 +12,7 @@ export const communitiesBase = t.Pick(communitiesInsert, [
   "description",
 ]);
 
-export type communitiesBase = Static<typeof communitiesBase>;
+export type CommunitiesBase = Static<typeof communitiesBase>;
 
 export const communitiesPayload = t.Intersect([communitiesBase]);
 
